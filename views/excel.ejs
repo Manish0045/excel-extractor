@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Excel Data Analyzer</title>
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+        }
+        
+        table {
+            border-collapse: collapse;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Upload Excel File (.xlsx)</h2>
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="excelFile" accept=".xlsx" required />
+        <button type="submit">Upload & View</button>
+    </form>
+
+    <% if (headers && rows) { %>
+        <h3>Filter Results</h3>
+        <form method="GET" action="/view">
+            <label>
+      Final Status:
+      <select name="Final_Status">
+        <option>All</option>
+        <% filters.FinalStatusList.forEach(val => { %>
+          <option value="<%= val %>" <%= selectedFilters.FinalStatus === val ? 'selected' : '' %>><%= val %></option>
+        <% }) %>
+      </select>
+    </label>
+
+            <label>
+      Country:
+      <select name="Country">
+        <option>All</option>
+        <% filters.CountryList.forEach(val => { %>
+          <option value="<%= val %>" <%= selectedFilters.Country === val ? 'selected' : '' %>><%= val %></option>
+        <% }) %>
+      </select>
+    </label>
+
+            <label>
+      QA Status:
+      <select name="QAStatus">
+        <option>All</option>
+        <% filters.QAStatusList.forEach(val => { %>
+          <option value="<%= val %>" <%= selectedFilters.QAStatus === val ? 'selected' : '' %>><%= val %></option>
+        <% }) %>
+      </select>
+    </label>
+
+            <button type="submit">Apply Filters</button>
+        </form>
+
+        <h3>Parsed Excel Data</h3>
+        <table>
+            <thead>
+                <tr>
+                    <% headers.forEach(header => { %>
+                        <th>
+                            <%= header %>
+                        </th>
+                        <% }) %>
+                </tr>
+            </thead>
+            <tbody>
+                <% rows.forEach(row => { %>
+                    <tr>
+                        <% headers.forEach(header => { %>
+                            <td>
+                                <%= row[header] %>
+                            </td>
+                            <% }) %>
+                    </tr>
+                    <% }) %>
+            </tbody>
+        </table>
+        <% } %>
+
+</body>
+
+</html>
