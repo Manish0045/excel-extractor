@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Excel Data Analyzer</title>
     <style>
         body {
@@ -26,6 +26,18 @@
         th {
             background: #f0f0f0;
         }
+        
+        label {
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+        
+        textarea {
+            width: 300px;
+            height: 80px;
+            resize: vertical;
+        }
     </style>
 </head>
 
@@ -39,36 +51,40 @@
     <% if (headers && rows) { %>
         <h3>Filter Results</h3>
         <form method="GET" action="/view">
-            <label>
-      Final Status:
-      <select name="Final_Status">
-        <option>All</option>
-        <% filters.FinalStatusList.forEach(val => { %>
-          <option value="<%= val %>" <%= selectedFilters.FinalStatus === val ? 'selected' : '' %>><%= val %></option>
-        <% }) %>
-      </select>
-    </label>
+            <label for="finalStatusSelect">Final Status:</label>
+            <select name="Final_Status" id="finalStatusSelect">
+            <option value="All">All</option>
+            <% filters.finalStatusList.forEach(val => { %>
+            <option value="<%= val %>" <%= selectedFilters.Final_Status === val ? 'selected' : '' %>>
+                <%= val %>
+            </option>
+            <% }) %>
+        </select>
 
-            <label>
-      Country:
-      <select name="Country">
-        <option>All</option>
-        <% filters.CountryList.forEach(val => { %>
-          <option value="<%= val %>" <%= selectedFilters.Country === val ? 'selected' : '' %>><%= val %></option>
-        <% }) %>
-      </select>
-    </label>
+            <label for="countrySelect">Country:</label>
+            <select name="Country" id="countrySelect">
+            <option value="All">All</option>
+            <% filters.countryList.forEach(val => { %>
+            <option value="<%= val %>" <%= selectedFilters.Country === val ? 'selected' : '' %>>
+                <%= val %>
+            </option>
+            <% }) %>
+        </select>
 
-            <label>
-      QA Status:
-      <select name="QAStatus">
-        <option>All</option>
-        <% filters.QAStatusList.forEach(val => { %>
-          <option value="<%= val %>" <%= selectedFilters.QAStatus === val ? 'selected' : '' %>><%= val %></option>
-        <% }) %>
-      </select>
-    </label>
+            <label for="qaStatusSelect">QA Status:</label>
+            <select name="QA_Status" id="qaStatusSelect">
+            <option value="All">All</option>
+            <% filters.qaStatusList.forEach(val => { %>
+            <option value="<%= val %>" <%= selectedFilters.QA_Status === val ? 'selected' : '' %>>
+                <%= val %>
+            </option>
+            <% }) %>
+        </select>
 
+            <label for="jobTitlesTextarea">Job Titles (paste multiple, separated by commas or new lines):</label>
+            <textarea name="Job_Titles" id="jobTitlesTextarea" placeholder="e.g. marketing, software engineer, project manager"><%= selectedFilters.Job_Titles ? selectedFilters.Job_Titles.replace(/\n/g, ', ') : '' %></textarea>
+
+            <br />
             <button type="submit">Apply Filters</button>
         </form>
 
@@ -88,7 +104,7 @@
                     <tr>
                         <% headers.forEach(header => { %>
                             <td>
-                                <%= row[header] %>
+                                <%- row[header] %>
                             </td>
                             <% }) %>
                     </tr>
@@ -97,6 +113,23 @@
         </table>
         <% } %>
 
+            <script>
+                // When user pastes into textarea, convert newlines to commas automatically
+                const jobTitlesTextarea = document.getElementById('jobTitlesTextarea');
+                jobTitlesTextarea.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const text = (e.clipboardData || window.clipboardData).getData('text');
+                    // Replace new lines with commas + space
+                    const formattedText = text.replace(/\r?\n/g, ', ');
+                    // Insert at cursor position
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    const value = this.value;
+                    this.value = value.substring(0, start) + formattedText + value.substring(end);
+                    // Set cursor after inserted text
+                    this.selectionStart = this.selectionEnd = start + formattedText.length;
+                });
+            </script>
 </body>
 
 </html>
