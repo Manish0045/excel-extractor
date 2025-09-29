@@ -9,9 +9,17 @@ const app = express();
 app.set('view engine', "ejs");
 app.set("views", path.join(__dirname, "views"));
 
+// Change this path if you want to use a different upload directory
+const uploadDir = process.env.UPLOAD_DIR || "/tmp/uploads";
+
+// Ensure upload directory exists
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, "./uploads/");
+        cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
         cb(null, `${Date.now()}-${file.originalname}`);
@@ -28,14 +36,13 @@ app.get("/", (req, res) => {
     res.render('excel', { headers: null, rows: null });
 });
 
-app.post('/upload', upload.single('excelFile'), async(req, res) => {
+app.post('/upload', upload.single('excelFile'), async (req, res) => {
     try {
         const filePath = req.file.path;
         const workbook = new ExcelJS.Workbook();
         await workbook.xlsx.readFile(filePath);
         const worksheet = workbook.worksheets[0];
 
-        // Get headers exactly as they are (including trailing spaces)
         const headers = worksheet.getRow(1).values.slice(1);
         const rows = [];
 
@@ -47,7 +54,6 @@ app.post('/upload', upload.single('excelFile'), async(req, res) => {
                 const cell = row.getCell(index + 1);
                 let value = cell.value;
 
-                // Process hyperlink or rich text if needed
                 if (value && typeof value === 'object') {
                     if (value.hyperlink && value.text) {
                         value = `<a href="${value.hyperlink}" target="_blank">${value.text}</a>`;
@@ -68,6 +74,7 @@ app.post('/upload', upload.single('excelFile'), async(req, res) => {
             rows.push(rowData);
         });
 
+        // Remove uploaded file to save space (optional)
         fs.unlinkSync(filePath);
 
         parsedData.headers = headers;
@@ -96,19 +103,17 @@ app.get('/view', (req, res) => {
         filteredRows = filteredRows.filter(r => r['QA_Status'] === QA_Status);
     }
 
-    // Use exact header with trailing space as seen in your Excel
-    const jobTitleHeader = 'Job_Title ';
-
+    let jobTitleList = [];
     if (Job_Titles && Job_Titles.trim() !== '') {
-        const jobTitleList = Job_Titles
+        jobTitleList = Job_Titles
             .split(/\r?\n|,/)
             .map(t => t.trim().toLowerCase())
             .filter(Boolean);
 
         filteredRows = filteredRows.filter(r =>
-            r[jobTitleHeader] &&
-            jobTitleList.some(filterTitle =>
-                r[jobTitleHeader].toString().toLowerCase().includes(filterTitle)
+            r['Job_Title'] &&
+            jobTitleList.some(jobTitleFilter =>
+                r['Job_Title'].toString().toLowerCase().includes(jobTitleFilter)
             )
         );
     }
@@ -129,5 +134,5 @@ app.get('/view', (req, res) => {
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
-    console.log("🌐 Server Started on port " + PORT);
+    console.log(`🌐 Server started on port ${PORT}`);
 });
